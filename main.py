@@ -1,69 +1,71 @@
 '''
 Author: Josh Eastman
-Updated: 02/08/2018
+Updated: 02/12/2018
 Description: Main file for Twitter Art Bot
 '''
 import os
 import praw
 import tweepy
-import urllib
 from instance import *
 from link_image_handling import *
 
 GO = True
+IMAGE_DIRECTORY = 'images\\' #Change 'images/' to your preferred image storage location
 
 reddit = RedditInstance().reddit_instance
 twitter = TwitterInstance().twitter_instance
 
+#Keep last URL so it doesn't post twice.
+#To-Do: Find a way to compare images
 last_url = ''
-
 
 while(GO):    
     new_post = ''
-    url = ''
-##
-##    print(reddit.read_only)
-##    for submission in reddit.subreddit('pics').hot(limit=5):
-##        url = submission.url
-##        
-##        new_post = submission.title + ' ' + submission.url
-##
-##        print(new_post)
+    is_new_post = False
+    new_submission = None
+    i = 1
+    subreddit = 'pics'
 
-    url = 'https://imgur.com/OyKKLKg'
-    result = handleLink(url)
-    print(result[0])
-    print(result[1])
-    print(result[2])
+    while not(is_new_post):
+        #Grab a post or multiple posts. If it's the same as the last post, try again.
+        for submission in reddit.subreddit(subreddit).hot(limit=i):
+            #Get the URL that hopefully leads to an image
+            new_submission = submission  
+            
+        if(last_url == submission.url ):
+            is_new_post = False
+            i = i + 1
+            print('Duplciate Post.' + 'Take #' + str(i))
+        else:
+            print('New Post!')
+            is_new_post = True
 
+    #Take the URL and return a usable image location and link.
+    link_result = handleLink(new_submission.url)
 
+    #Make sure the handleLink didn't fail, the move onto getting the image
+    if(link_result[0]):
+        image_result = getImage(link_result[1], link_result[2], IMAGE_DIRECTORY)
 
-    
-##    fixed_url = url[:8] + 'i.' + url[8:] + '.jpg'
-##    image = fixed_url[20:]
-##    print(image)
+        #Make sure getting the image didn't fail, then move onto preparing the tweet
+        if(image_result[0]):
+            new_tweet = prepareTweet(new_submission.title, link_result[1], subreddit)
 
-   # urllib.request.urlretrieve(url,image)
- #   os.rename('OyKKLKg.jpg', 'images/OyKKLKg.jpg')
-      
+            #Make sure preparing the tweet didn't fail, then move onto sending the tweet
+            if(new_tweet[0]):
+                print('#########################################################')
+                print('Tweeting \n'+ new_tweet[1] + '\n' + image_result[1])
+                print('#########################################################')
+                tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
+                
+            else:
+                print('ERROR: ' + new_tweet[1] + ' | ' + new_tweet[2])          
+        else:
+            print('ERROR: ' + image_result[1] + ' | ' + image_result[2])        
+    else:
+        print('ERROR: ' + link_result[1] + ' | ' + link_result[2])
+
     GO = False
-
-
-#    urllib.request.urlretrieve(url,"39XeDFj.jpg")
-#
-#    twitter.update_with_media("39XeDFj.jpg","test")
-
-
-
     
-        
     
 
-    
-
-    
-#imgur 'https://i.imgur.com/OyKKLKg.jpg','OyKKLKg.jpg'
-#for imgur, add i. & .jpg to url, strip everything but id & .jpg from from url for image
-
-
-#For reddit, strip all but identifier, done.
