@@ -8,19 +8,24 @@ import praw
 import tweepy
 from instance import *
 from link_image_handling import *
+import logging
+
+logging.basicConfig(filename = 'twitterArt.log', format = '%(levelname)s:%(asctime)s:%(message)s',
+                    datefmt = '%Y/%m/%d %I:%M:%S %p', level = logging.INFO)
 
 GO = True
-IMAGE_DIRECTORY = 'images\\' #Change 'images\' to your preferred image storage location
+IMAGE_DIRECTORY = 'images\\' #Change 'images\\' to your preferred image storage location
 
 reddit = RedditInstance().reddit_instance
 twitter = TwitterInstance().twitter_instance
 
 #Keep last URL so it doesn't post twice.
 #To-Do: Find a way to compare images
+#To-Do: If it fails after file downloads, remove file
 last_post = ''
-i = 1
 
-while(GO):    
+while(GO):
+    i = 1
     new_post = ''
     is_posted = False
     new_submission = None  
@@ -36,11 +41,11 @@ while(GO):
             new_submission = submission  
             
             if(last_post == submission.url ):
-                print('Duplciate Post.' + 'Take #' + str(i))
+                logging.info('Duplciate Post.' + 'Take #' + str(i))
                 i = i + 1
                 continue
             else:
-                print('New Post!')
+                logging.info('New post found')
 
                 #Take the URL and return a usable image location and link.
                 link_result = handleLink(new_submission.url)
@@ -49,33 +54,31 @@ while(GO):
                 if(link_result[0]):
                     image_result = getImage(link_result[1], link_result[2], IMAGE_DIRECTORY)
                 else:
-                    print('ERROR: ' + link_result[1] + ' | ' + link_result[2])
+                    logging.error(link_result[1] + ' | ' + link_result[2])
                     i = i + 1
                     last_post = new_submission.url
                     continue
                 
                     #Make sure getting the image didn't fail, then move onto preparing the tweet
                 if(image_result[0]):
-                    new_tweet = prepareTweet(new_submission.title, link_result[1], subreddit)
+                    new_tweet = prepareTweet(new_submission)
                 else:
-                    print('ERROR: ' + image_result[1] + ' | ' + image_result[2])
+                    logging.error(image_result[1] + ' | ' + image_result[2])
                     i = i + 1
                     last_post = new_submission.url
                     continue
                 
                 #Make sure preparing the tweet didn't fail, then move onto sending the tweet
                 if(new_tweet[0]):
-                    print('#########################################################')
-                    print('Tweeting \n'+ new_tweet[1] + '\n' + image_result[1])
-                    print('#########################################################')
-                    #tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
+                    logging.info('Tweeting \n'+ new_tweet[1] + '\n')
+                    tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
                     is_posted = True
-                    i=1
                     GO = False
+                    logging.info('Success! Ending')
                     break
                     
                 else:
-                    print('ERROR: ' + new_tweet[1] + ' | ' + new_tweet[2])
+                    logging.error(new_tweet[1] + ' | ' + new_tweet[2])
                     last_post = new_submission.url
                     continue
                    

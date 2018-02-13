@@ -1,5 +1,6 @@
 import urllib.request
 import os
+import logging
 
 #If a link does not have .jpg at the end, add it
 def ifNoExtensionAdd(url):
@@ -45,29 +46,35 @@ def moveImage(image_name, image_directory):
         
         return [True, file_location, 'Moved image to ' + file_location]
     except:
+        os.remove(image_name)
+        logging.warning(image_name + ' was deleted.')
         return [False, file_location, 'Failed to move file']
 
 #Finds the image from the url and downloads it.
 def getImage(url, image_location, image_directory):
     try:
         urllib.request.urlretrieve(url, image_location)
+        logging.info(image_location + ' was downloaded.')       
         image_moved = moveImage(image_location, image_directory)
 
         if(image_moved[0]):
+            logging.info(image_location + ' was moved to ' + image_directory)
             return [True, image_moved[1], 'Obtained and moved image to image folder']           
         else:
             return [False, url, image_moved[2] + ' | ' + image_moved[1]]
+        
     except:
         return [False, url, 'Failed to get image']
     
 #Formats the tweet to prepare to send.
-def prepareTweet(title, url, source):
+def prepareTweet(submission):
     #Include source if possible.
     try:
-        tweet_text = title + '\nThis was posted at ' + url + '.\n' + 'Found on Reddit.com/r/' + source
-        return [True, tweet_text]
+        tweet_text = (submission.title + '\nThis was posted by ' + submission.author.name + ' on '
+                      + '/r/' + submission.subreddit.display_name + '.\n' + submission.url)
+        return [True, tweet_text, 'Tweet created sucessfully']
     except:
-        return [False, 'Error creating tweet (link_image_handling > prepareTweet)']
+        return [False, tweet_text, 'Error creating tweet (link_image_handling > prepareTweet)']
     
     
     
