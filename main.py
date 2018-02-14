@@ -3,7 +3,7 @@ Author: Josh Eastman
 Updated: 02/12/2018
 Description: Main file for Twitter Art Bot
 '''
-import os
+import os,time
 import praw
 import tweepy
 from instance import *
@@ -15,16 +15,18 @@ logging.basicConfig(filename = 'twitterArt.log', format = '%(levelname)s:%(ascti
 
 GO = True
 IMAGE_DIRECTORY = 'images\\' #Change 'images\\' to your preferred image storage location
+TIME_BETWEEN_POSTS = 60 #minutes
 
 reddit = RedditInstance().reddit_instance
 twitter = TwitterInstance().twitter_instance
 
 #Keep last URL so it doesn't post twice.
 #To-Do: Find a way to compare images
-#To-Do: If it fails after file downloads, remove file
-last_post = ''
+#To-Do: Add more Subreddit variety
+#To-Do: Remove images once a cap is reached.
+ignore_post = []
 
-while(GO):
+while(GO):  
     i = 1
     new_post = ''
     is_posted = False
@@ -40,7 +42,7 @@ while(GO):
             #Get the URL that hopefully leads to an image
             new_submission = submission  
             
-            if(last_post == submission.url ):
+            if(new_submission.url in ignore_post):
                 logging.info('Duplciate Post.' + 'Take #' + str(i))
                 i = i + 1
                 continue
@@ -56,7 +58,7 @@ while(GO):
                 else:
                     logging.error(link_result[1] + ' | ' + link_result[2])
                     i = i + 1
-                    last_post = new_submission.url
+                    ignore_post.append(new_submission.url)
                     continue
                 
                     #Make sure getting the image didn't fail, then move onto preparing the tweet
@@ -65,23 +67,28 @@ while(GO):
                 else:
                     logging.error(image_result[1] + ' | ' + image_result[2])
                     i = i + 1
-                    last_post = new_submission.url
+                    ignore_post.append(new_submission.url)
                     continue
                 
                 #Make sure preparing the tweet didn't fail, then move onto sending the tweet
                 if(new_tweet[0]):
                     logging.info('Tweeting \n'+ new_tweet[1] + '\n')
-                    tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
+                    #tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
                     is_posted = True
-                    GO = False
+                    ignore_post.append(new_submission.url)
                     logging.info('Success! Ending')
-                    break
-                    
+                    break                   
                 else:
                     logging.error(new_tweet[1] + ' | ' + new_tweet[2])
-                    last_post = new_submission.url
+                    ignore_post.append(new_submission.url)
                     continue
-                   
+
+    print(ignore_post)
+    #Don't keep more than 50 previous posts. Posts older than that aren't likely to be seen again.
+    if(len(ignore_post) > 50):
+        ignore_post.pop(0)
+        
+    time.sleep(TIME_BETWEEN_POSTS * 60)
 
     
     
