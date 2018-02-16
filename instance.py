@@ -12,8 +12,8 @@ class RedditInstance:
     reddit_instance = None
 
     def __init__(self):
-        #credentialsFile = "credentials/Credentials.txt" #Prod
-        credentials_file = "credentials/testCredentials.txt" #Test
+        credentialsFile = "credentials/Credentials.txt" #Prod
+        #credentials_file = "credentials/testCredentials.txt" #Test
         openedFile = open(credentials_file,"r")
         credentials = openedFile.readlines()
 
@@ -21,8 +21,8 @@ class RedditInstance:
         self.client_id = credentials[0].strip()
         self.client_secret = credentials[1].strip()
         self.user_agent = credentials[2].strip()
-        self.username = credentials[3].strip()
-        self.password = credentials[4].strip()
+#        self.username = credentials[3].strip()
+#        self.password = credentials[4].strip()
 
 
         #Don't need to provide user details due to only needing a Read Only instance.
