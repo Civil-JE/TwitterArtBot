@@ -1,17 +1,15 @@
-'''
-Author: Josh Eastman
-Updated: 02/12/2018
-Description: Main file for Twitter Art Bot
-'''
-import os,time
-import praw
-import tweepy
+
+# Author: Josh Eastman
+# Updated: 02/19/2018
+# Description: Main file for Twitter Art Bot
+
+import time
 from instance import *
 from link_image_handling import *
 import logging
 
-logging.basicConfig(filename = 'twitterArt.log', format = '%(levelname)s:%(asctime)s:%(message)s',
-                    datefmt = '%Y/%m/%d %I:%M:%S %p', level = logging.INFO)
+logging.basicConfig(filename='twitterArt.log', format='%(levelname)s:%(asctime)s:%(message)s',
+                    datefmt='%Y/%m/%d %I:%M:%S %p', level=logging.INFO)
 
 GO = True
 IMAGE_DIRECTORY = 'images\\'  # Change 'images\\' to your preferred image storage location
@@ -62,7 +60,7 @@ while GO:
                     continue
                 
                     # Make sure getting the image didn't fail, then move onto preparing the tweet
-                if image_result[0] :
+                if image_result[0]:
                     new_tweet = prepare_tweet(new_submission)
                 else:
                     logging.error(image_result[1] + ' | ' + image_result[2])
@@ -72,7 +70,7 @@ while GO:
                 
                 # Make sure preparing the tweet didn't fail, then move onto sending the tweet
                 if new_tweet[0]:
-                    logging.info('Tweeting \n'+ new_tweet[1] + '\n')
+                    logging.info('Tweeting \n' + new_tweet[1] + '\n')
                     tweet_result = twitter.update_with_media(image_result[1], new_tweet[1])
                     is_posted = True
                     ignore_post.append(new_submission.url)
@@ -83,13 +81,8 @@ while GO:
                     ignore_post.append(new_submission.url)
                     continue
 
-    print(ignore_post)
     # Don't keep more than 50 previous posts. Posts older than that aren't likely to be seen again.
     if len(ignore_post) > 50:
         ignore_post.pop(0)
         
     time.sleep(TIME_BETWEEN_POSTS * 60)
-
-    
-    
-
