@@ -14,66 +14,66 @@ logging.basicConfig(filename = 'twitterArt.log', format = '%(levelname)s:%(ascti
                     datefmt = '%Y/%m/%d %I:%M:%S %p', level = logging.INFO)
 
 GO = True
-IMAGE_DIRECTORY = 'images\\' #Change 'images\\' to your preferred image storage location
-TIME_BETWEEN_POSTS = 60 #minutes
+IMAGE_DIRECTORY = 'images\\'  # Change 'images\\' to your preferred image storage location
+TIME_BETWEEN_POSTS = 60  # minutes
 
 reddit = RedditInstance().reddit_instance
 twitter = TwitterInstance().twitter_instance
 
-#Keep last URL so it doesn't post twice.
-#To-Do: Find a way to compare images
-#To-Do: Add more Subreddit variety
-#To-Do: Remove images once a cap is reached.
+# Keep last URL so it doesn't post twice.
+# To-Do: Find a way to compare images
+# To-Do: Add more Subreddit variety
+# To-Do: Remove images once a cap is reached.
 ignore_post = []
 
-while(GO):  
+while GO:
     i = 1
     new_post = ''
     is_posted = False
     new_submission = None  
     subreddit = 'art'
 
-    while not(is_posted):
-        #Grab a post or multiple posts. If it's the same as the last post, try again.
+    while not is_posted:
+        # Grab a post or multiple posts. If it's the same as the last post, try again.
         for idx, submission in enumerate(reddit.subreddit(subreddit).hot(limit=i)):
-            if(idx != i-1):
+            if idx != i-1:
                 continue
             
-            #Get the URL that hopefully leads to an image
+            # Get the URL that hopefully leads to an image
             new_submission = submission  
             
-            if(new_submission.url in ignore_post):
-                logging.info('Duplciate Post.' + 'Take #' + str(i))
+            if new_submission.url in ignore_post:
+                logging.info('Duplicate Post.' + 'Take #' + str(i))
                 i = i + 1
                 continue
             else:
                 logging.info('New post found')
 
-                #Take the URL and return a usable image location and link.
-                link_result = handleLink(new_submission.url)
+                # Take the URL and return a usable image location and link.
+                link_result = handle_link(new_submission.url)
 
-                #Make sure the handleLink didn't fail, the move onto getting the image
-                if(link_result[0]):
-                    image_result = getImage(link_result[1], link_result[2], IMAGE_DIRECTORY)
+                # Make sure the handleLink didn't fail, the move onto getting the image
+                if link_result[0]:
+                    image_result = get_image(link_result[1], link_result[2], IMAGE_DIRECTORY)
                 else:
                     logging.error(link_result[1] + ' | ' + link_result[2])
                     i = i + 1
                     ignore_post.append(new_submission.url)
                     continue
                 
-                    #Make sure getting the image didn't fail, then move onto preparing the tweet
-                if(image_result[0]):
-                    new_tweet = prepareTweet(new_submission)
+                    # Make sure getting the image didn't fail, then move onto preparing the tweet
+                if image_result[0] :
+                    new_tweet = prepare_tweet(new_submission)
                 else:
                     logging.error(image_result[1] + ' | ' + image_result[2])
                     i = i + 1
                     ignore_post.append(new_submission.url)
                     continue
                 
-                #Make sure preparing the tweet didn't fail, then move onto sending the tweet
-                if(new_tweet[0]):
+                # Make sure preparing the tweet didn't fail, then move onto sending the tweet
+                if new_tweet[0]:
                     logging.info('Tweeting \n'+ new_tweet[1] + '\n')
-                    #tweet_result = twitter.update_with_media(image_result[1],new_tweet[1])
+                    tweet_result = twitter.update_with_media(image_result[1], new_tweet[1])
                     is_posted = True
                     ignore_post.append(new_submission.url)
                     logging.info('Success! Ending')
@@ -84,8 +84,8 @@ while(GO):
                     continue
 
     print(ignore_post)
-    #Don't keep more than 50 previous posts. Posts older than that aren't likely to be seen again.
-    if(len(ignore_post) > 50):
+    # Don't keep more than 50 previous posts. Posts older than that aren't likely to be seen again.
+    if len(ignore_post) > 50:
         ignore_post.pop(0)
         
     time.sleep(TIME_BETWEEN_POSTS * 60)
